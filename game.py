@@ -1,7 +1,8 @@
 import itertools
 import math
 import random
-import numpy as np
+
+from factory import Factory, factory_dist
 
 
 class GameBoard:
@@ -10,10 +11,7 @@ class GameBoard:
         self.links = []
         self.troops = []
         self.bombs = []
-        self.orders = {
-            -1: [],
-            1: [],
-        }
+        self.orders = []
         self.game_over = False
 
     def init_game(
@@ -119,6 +117,9 @@ class GameBoard:
         else:
             return random.randint(*self.stock_range_player)
 
+    def execute(self, order):
+        pass
+
     def update(self):
         for troop in self.troops:
             troop.move()
@@ -134,100 +135,3 @@ class GameBoard:
             factory.resolve_bombs()
         if self.end_conditions():
             self.game_over = True
-
-
-def factory_dist(a, b):
-    float_dist = math.sqrt(
-        (a.position[0]-b.position[0])**2 + (a.position[1]-b.position[1])**2
-    )
-    return int(float_dist)
-
-
-class Factory:
-    def __init__(self, fid, team, production, stock, position):
-        self.id = fid
-
-        self.team = team
-        self.stock = stock
-        self.position = position  # (x, y)
-
-        self.production = production
-
-        # List holding net strength of troops that have moved into the factory
-        # this turn
-        self.occupying_troops = {
-            -1: 0,
-            1: 0,
-        }
-
-        # Number of bombs currently arriving
-        self.bombs_arriving = 0
-
-    def produce(self):
-        if self.team == 0:
-            return
-        self.stock += self.production
-
-    def resolve_battles(self):
-        occupying_result = self.occupying_troops[self.team] \
-                         - self.occupying_troops[-self.team]
-
-        self.stock += occupying_result
-
-        if self.stock == 0:
-            self.team = 0
-        elif self.stock < 0:
-            self.team = -self.team
-            self.stock = -self.stock
-
-        self.occupying_troops = {-1: 0, 1: 0}
-
-    def resolve_bombs(self):
-        for _ in range(self.bombs_arriving):
-            destroyed = max(10, self.stock//2)
-            self.stock -= destroyed
-
-        self.bombs_arriving = 0
-
-
-class Unit:
-    def __init__(self, strength, source, destination):
-        self.strength = strength
-
-        self.team = self.source.team
-        self.active = True
-
-        # N.B. implement a jsonize that just outputs source, dest IDs
-        self.source = source
-        self.destination = destination
-
-        self.distance = factory_dist(source, destination)
-        self.travelled = 0
-
-    def resolve_at_dest(self):
-        # TODO: make this class abstract so we don't have this lazy error
-        raise NotImplementedError("Spawn Troops or Bombs, not Units.")
-
-    def move(self):
-        self.travelled += 1
-        if self.travelled == self.distance:
-            self.resolve_at_dest()
-            self.active = False
-
-    def get_position(self):
-        vec = np.array(self.destination.position) \
-            - np.array(self.source.position)
-
-        vec *= self.travelled / self.distance
-
-        return vec
-
-
-class Troop(Unit):
-    def resolve_at_dest(self):
-        self.destination.occupying_troops[self.team] += self.strength
-
-
-class Bomb(Unit):
-    def resolve_at_dest(self):
-        self.destination.bombs_arriving += 1
