@@ -1,4 +1,46 @@
-class Order:
+from abc import ABC, abstractmethod
+from unit import Bomb, Troop
+
+
+class Order(ABC):
+    def validate(self, game, team):
+        """
+        Validate that an order can be given, e.g. that a move command is being
+        made from an owned factory.
+
+        Parameters
+        ----------
+        game : GameBoard
+            Current game state
+        team : int
+            Team issuing the command
+
+        Returns
+        -------
+        bool
+            True if the order can be given, False if not
+        """
+        # Use the template method pattern so we can preserve the docstring
+        return self._validate(game, team)
+
+    @abstractmethod
+    def _validate(self, game, team):
+        pass
+
+    def execute(self, game):
+        """
+        Execute the order, mutating the game state.
+
+        Parameters
+        ----------
+        game : GameBoard
+        """
+        self._execute(game)
+
+    @abstractmethod
+    def _execute(self, move):
+        pass
+
     @classmethod
     def from_string(_, order_string):
         """
@@ -69,8 +111,23 @@ class Move(Order):
         self.destination = destination
         self.count = count
 
+    def _validate(self, game, team):
+        if team == game.get_factory(self.source).team:
+            return True
+        else:
+            return False
 
-class Bomb(Order):
+    def _execute(self, game):
+        factory = game.get_factory(self.source)
+        troop_strength = min(factory.stock, self.count)
+
+        factory.stock -= troop_strength
+
+        new_troop = Troop(troop_strength, self.source, self.destination)
+        game.troops.append(new_troop)
+
+
+class SendBomb(Order):
     """
     Send a bomb from an ally factory to an enemy factory
 
@@ -85,6 +142,22 @@ class Bomb(Order):
         self.source = source
         self.destination = destination
 
+    def _validate(self, game, team):
+        right_team = team == game.get_factory(self.source).team
+        enough_bombs = game.remaining_bombs[team] > 0
+
+        if right_team and enough_bombs:
+            return True
+        else:
+            return False
+
+    def _execute(self, game):
+        factory = game.get_factory(self.source)
+
+        game.remaining_bombs[factory.team] -= 1
+        new_bomb = Bomb(None, self.source, self.destination)
+        game.bombs.append(new_bomb)
+
 
 class Inc(Order):
     """
@@ -98,12 +171,28 @@ class Inc(Order):
     def __init__(self, target):
         self.target = None
 
+    def _validate(self, game, team):
+        if team == game.get_factory(self.target).team:
+            return True
+        else:
+            return False
+
+    def _execute(self, game):
+        factory = game.get_factory(self.target)
+        factory.upgrade()
+
 
 class Wait(Order):
     """
     Do nothing
     """
     def __init__(self):
+        pass
+
+    def _validate(self, game, team):
+        return True
+
+    def _execute(self, game):
         pass
 
 
@@ -118,3 +207,9 @@ class Msg(Order):
     """
     def __init__(self, message):
         self.message = message
+
+    def _validate(self, game, team):
+        return True
+
+    def _execute(self, game):
+        pass  # TODO: implement

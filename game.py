@@ -11,7 +11,8 @@ class GameBoard:
         self.links = []
         self.troops = []
         self.bombs = []
-        self.orders = []
+        self.remaining_bombs = {-1: 2, 1: 2}
+        self.orders = {-1: [], 1: []}
         self.game_over = False
 
     def init_game(
@@ -101,6 +102,10 @@ class GameBoard:
                 self.factories = factories
 
     def link_factories(self):
+        """
+        Create a list of factory-factory distances, mainly for exporting to
+        JSON
+        """
         self.links = []
         for a, b in itertools.combinations(self.factories, 2):
             dist = factory_dist(a, b)
@@ -111,27 +116,58 @@ class GameBoard:
                 (b.id, a.id, dist)
             )
 
+    def get_factory(self, factory_id):
+        """
+        Get a factory with the given ID
+
+        Parameters
+        ----------
+        factory_id : int
+        """
+        for factory in self.factories:
+            if factory.id == factory_id:
+                return factory
+        else:
+            msg = "Factory {} not found"
+            raise ValueError(msg.format(factory_id))
+
     def random_stock(self, neutral):
+        """
+        Convenience method to return a random stock
+        """
         if neutral:
             return random.randint(*self.stock_range_neutral)
         else:
             return random.randint(*self.stock_range_player)
 
     def execute(self, order):
+        """
+        Execute an order
+        """
         pass
 
     def update(self):
+        """
+        Execute game logic for one turn
+        """
         for troop in self.troops:
             troop.move()
+
         self.troops = [troop for troop in self.troops if troop.active]
+
         for bomb in self.bombs:
             bomb.move()
         self.bombs = [bomb for bomb in self.bombs if bomb.active]
-        for order in self.orders:
-            self.execute(order)
+
+        for team, orders in self.orders.items():
+            for order in orders:
+                if order.validate(self, team):
+                    order.execute(self)
+
         for factory in self.factories:
             factory.produce()
             factory.resolve_battles()
             factory.resolve_bombs()
+
         if self.end_conditions():
             self.game_over = True
