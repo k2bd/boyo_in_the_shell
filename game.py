@@ -6,6 +6,14 @@ from factory import Factory, factory_dist
 
 
 class GameBoard:
+    """
+    A game board for Boyo in the Shell.
+
+    Game loop with:
+
+    while not game_board.game_over:
+        game_board.update()
+    """
     def __init__(self):
         self.factories = []
         self.links = []
@@ -140,12 +148,6 @@ class GameBoard:
         else:
             return random.randint(*self.stock_range_player)
 
-    def execute(self, order):
-        """
-        Execute an order
-        """
-        pass
-
     def update(self):
         """
         Execute game logic for one turn
@@ -169,5 +171,14 @@ class GameBoard:
             factory.resolve_battles()
             factory.resolve_bombs()
 
-        if self.end_conditions():
+        self.check_end_conditions()
+
+    def check_end_condition(self):
+        fac_teams = [fac.team for fac in self.factories]
+
+        if all([team == 1 for team in fac_teams]):
+            self.winner = 1
+            self.game_over = True
+        elif all([team == -1 for team in fac_teams]):
+            self.winner = -1
             self.game_over = True

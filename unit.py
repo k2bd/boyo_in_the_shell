@@ -1,9 +1,11 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 
 from factory import factory_dist
 
 
-class Unit:
+class Unit(ABC):
     def __init__(self, strength, source, destination):
         self.strength = strength
 
@@ -17,9 +19,9 @@ class Unit:
         self.distance = factory_dist(source, destination)
         self.travelled = 0
 
+    @abstractmethod
     def resolve_at_dest(self):
-        # TODO: make this class abstract so we don't have this lazy error
-        raise NotImplementedError("Spawn Troops or Bombs, not Units.")
+        pass
 
     def move(self):
         self.travelled += 1
