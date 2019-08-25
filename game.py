@@ -22,6 +22,8 @@ class GameBoard:
         self.remaining_bombs = {-1: 2, 1: 2}
         self.orders = {-1: [], 1: []}
         self.game_over = False
+        self.max_turns = None
+        self.current_turn = 0
 
     def init_game(
             self,
@@ -29,12 +31,14 @@ class GameBoard:
             min_dist=1,
             max_dist=20,
             stock_range_player=(15, 30),
-            stock_range_neutral=(0, 10),):
+            stock_range_neutral=(0, 10),
+            max_turns=200):
         self.num_factories = random.randint(*num_factory_range)
         self.min_dist = min_dist
         self.max_dist = max_dist
         self.stock_range_player = stock_range_player
         self.stock_range_neutral = stock_range_neutral
+        self.max_turns = max_turns
 
         self.place_factories()
         self.link_factories()
@@ -152,6 +156,8 @@ class GameBoard:
         """
         Execute game logic for one turn
         """
+        self.current_turn += 1
+
         for troop in self.troops:
             troop.move()
 
@@ -182,3 +188,18 @@ class GameBoard:
         elif all([team == -1 for team in fac_teams]):
             self.winner = -1
             self.game_over = True
+
+        if self.max_turns is not None and self.current_turn >= self.max_turns:
+            self.game_over = True
+
+            team_facs = {
+                team: len([fac for fac in self.factories if fac.team == team])
+                for team in [-1, 1]
+            }
+
+            if team_facs[-1] > team_facs[1]:
+                self.winner = -1
+            elif team_facs[1] > team_facs[1]:
+                self.winner = 1
+            else:
+                self.winner = 0
