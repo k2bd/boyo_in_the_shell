@@ -62,7 +62,7 @@ class App:
             for i in range(4):
                 filename = "{}_fac_{}.png".format(color, i)
                 path = os.path.join("res", filename)
-                image = pygame.image.load(path).convert()
+                image = pygame.image.load(path)
 
                 self.factory_sprites[team].append(image)
 
@@ -88,6 +88,7 @@ class App:
     def loop(self):
         # TODO: handle player input
 
+        # Update the game once per ``self.turn_time`` ms.
         self.clock.tick()
         self.timer += self.clock.get_time()
         while self.timer > self.turn_time:
@@ -112,7 +113,7 @@ class App:
                                     Move(
                                         factory.id,
                                         t_factory.id,
-                                        max(1, t_factory.stock),
+                                        t_factory.stock + 1,
                                     )
                                 )
             # TODO: end testing input
@@ -129,7 +130,7 @@ class App:
         for factory in self.game.factories:
             self.draw_factory(factory)
 
-        for unit in self.game.troops + self.game.bombs:
+        for unit in self.game.bombs + self.game.troops:
             self.draw_unit(unit)
 
         pygame.display.flip()
