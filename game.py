@@ -52,9 +52,9 @@ class GameBoard:
         if self.num_factories % 2 == 1:
             self.factories.append(
                 Factory(
-                    id=0,
+                    fid=0,
                     team=0,
-                    production=random.randint(0, 3),
+                    production=self.random_production(),
                     stock=self.random_stock(neutral=True),
                     position=(0, 0),
                 )
@@ -69,20 +69,20 @@ class GameBoard:
             pos_y = math.sin(angle) * dist
 
             stock = self.random_stock(neutral=neutral)
-            production = random.randint(0, 3)
+            production = self.random_production()
 
             team = 0 if neutral else 1
 
             start_id = len(self.factories)
             new_factory = Factory(
-                id=start_id,
+                fid=start_id,
                 team=team,
                 production=production,
                 stock=stock,
                 position=(pos_x, pos_y)
             )
             rotated_factory = Factory(
-                id=start_id+1,
+                fid=start_id+1,
                 team=-team,
                 production=production,
                 stock=stock,
@@ -143,9 +143,16 @@ class GameBoard:
             msg = "Factory {} not found"
             raise ValueError(msg.format(factory_id))
 
+    def random_production(self):
+        """
+        Convenience method to return a random initial production for a factory.
+        Currently does not depend on any property of the factory or game board.
+        """
+        return random.randint(0, 3)
+
     def random_stock(self, neutral):
         """
-        Convenience method to return a random stock
+        Convenience method to return a random initial factory stock.
         """
         if neutral:
             return random.randint(*self.stock_range_neutral)
@@ -179,7 +186,7 @@ class GameBoard:
 
         self.check_end_conditions()
 
-    def check_end_condition(self):
+    def check_end_conditions(self):
         fac_teams = [fac.team for fac in self.factories]
 
         if all([team == 1 for team in fac_teams]):
