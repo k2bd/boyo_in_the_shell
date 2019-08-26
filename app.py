@@ -28,8 +28,6 @@ class App:
         self.game = GameBoard()
         self.game.init_game()
 
-        print(len(self.game.factories))
-
         self.timer = 0.0
 
         # Game timer
@@ -47,8 +45,9 @@ class App:
 
         self._display_surf = pygame.display.set_mode(
             self.size, pygame.HWSURFACE | pygame.DOUBLEBUF)
-        self._background = pygame.Surface(self._display_surf.get_size())
-        self._background.fill((0, 0, 0))
+
+        bgfile = os.path.join("res", "background.png")
+        self._background = pygame.image.load(bgfile)
 
         self._running = True
 
