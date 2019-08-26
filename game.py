@@ -69,7 +69,11 @@ class GameBoard:
             pos_y = math.sin(angle) * dist
 
             stock = self.random_stock(neutral=neutral)
-            production = self.random_production()
+
+            if neutral:
+                production = self.random_production()
+            else:
+                production = 1
 
             team = 0 if neutral else 1
 
@@ -102,7 +106,7 @@ class GameBoard:
             return True
 
         # Randomize player bases
-        while len(self.factories) < 3:
+        while len(self.factories) < 2:
             factories = self.factories + new_factory_pair(neutral=False)
             if all_links_ok(factories):
                 self.factories = factories
@@ -178,6 +182,7 @@ class GameBoard:
             for order in orders:
                 if order.validate(self, team):
                     order.execute(self)
+        self.orders = {-1: [], 1: []}
 
         for factory in self.factories:
             factory.produce()
@@ -190,9 +195,13 @@ class GameBoard:
         fac_teams = [fac.team for fac in self.factories]
 
         if all([team == 1 for team in fac_teams]):
+            if any([troop.team == -1 for troop in self.troops]):
+                return
             self.winner = 1
             self.game_over = True
         elif all([team == -1 for team in fac_teams]):
+            if any([troop.team == 1 for troop in self.troops]):
+                return
             self.winner = -1
             self.game_over = True
 

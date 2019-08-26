@@ -112,18 +112,27 @@ class Move(Order):
         self.count = count
 
     def _validate(self, game, team):
-        if team == game.get_factory(self.source).team:
+        source_factory = game.get_factory(self.source)
+        target_factory = game.get_factory(self.destination)
+
+        if team == game.get_factory(self.source).team \
+                and source_factory.id != target_factory.id:
             return True
         else:
             return False
 
     def _execute(self, game):
-        factory = game.get_factory(self.source)
-        troop_strength = min(factory.stock, self.count)
+        source_factory = game.get_factory(self.source)
+        troop_strength = min(source_factory.stock, self.count)
 
-        factory.stock -= troop_strength
+        if troop_strength == 0:
+            return
 
-        new_troop = Troop(troop_strength, self.source, self.destination)
+        source_factory.stock -= troop_strength
+
+        target_factory = game.get_factory(self.destination)
+
+        new_troop = Troop(troop_strength, source_factory, target_factory)
         game.troops.append(new_troop)
 
 
@@ -143,19 +152,24 @@ class SendBomb(Order):
         self.destination = destination
 
     def _validate(self, game, team):
+        source_factory = game.get_factory(self.source)
+        target_factory = game.get_factory(self.destination)
+
+        different_factory = source_factory.id != target_factory.id
         right_team = team == game.get_factory(self.source).team
         enough_bombs = game.remaining_bombs[team] > 0
 
-        if right_team and enough_bombs:
+        if right_team and enough_bombs and different_factory:
             return True
         else:
             return False
 
     def _execute(self, game):
         factory = game.get_factory(self.source)
+        target = game.get_factory(self.destination)
 
         game.remaining_bombs[factory.team] -= 1
-        new_bomb = Bomb(None, self.source, self.destination)
+        new_bomb = Bomb(None, factory, target)
         game.bombs.append(new_bomb)
 
 
@@ -169,7 +183,7 @@ class Inc(Order):
         Factory to upgrade
     """
     def __init__(self, target):
-        self.target = None
+        self.target = target
 
     def _validate(self, game, team):
         if team == game.get_factory(self.target).team:
