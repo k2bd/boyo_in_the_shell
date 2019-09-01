@@ -3,9 +3,11 @@ import math
 import random
 
 from factory import Factory, factory_dist
+from jsonize import Jsonizable
+from unit import Troop, Bomb
 
 
-class GameBoard:
+class GameBoard(Jsonizable):
     """
     A game board for Boyo in the Shell.
 
@@ -219,3 +221,76 @@ class GameBoard:
                 self.winner = 1
             else:
                 self.winner = 0
+
+    def to_json(self):
+        obj = {}
+
+        obj["links"] = [list(link) for link in self.links]
+        obj["remaining_bombs"] = {
+            str(k): v for k, v in self.remaining_bombs.items()
+        }
+        obj["game_over"] = self.game_over
+        obj["max_turns"] = self.max_turns
+        obj["current_turn"] = self.current_turn
+
+        obj["num_factories"] = self.num_factories
+        obj["min_dist"] = self.min_dist
+        obj["max_dist"] = self.max_dist
+        obj["stock_range_player"] = list(self.stock_range_player)
+        obj["stock_range_neutral"] = list(self.stock_range_neutral)
+        obj["max_turns"] = self.max_turns
+
+        obj["factories"] = [factory.to_json() for factory in self.factories]
+        obj["troops"] = [troop.to_json() for troop in self.troops]
+        obj["bombs"] = [bomb.to_json() for bomb in self.bombs]
+
+        return obj
+
+    @classmethod
+    def from_json(cls, obj):
+        board = cls()
+
+        board.links = [tuple(link) for link in obj["links"]]
+        board.remaining_bombs = obj["remaining_bombs"]
+        board.game_over = obj["game_over"]
+        board.max_turns = obj["max_turns"]
+        board.current_turn = obj["current_turn"]
+
+        board.num_factories = obj["num_factories"]
+        board.min_dist = obj["min_dist"]
+        board.max_dist = obj["max_dist"]
+        board.stock_range_player = tuple(obj["stock_range_player"])
+        board.stock_range_neutral = tuple(obj["stock_range_neutral"])
+        board.max_turns = obj["max_turns"]
+
+        board.factories = [
+            Factory.from_json(fac) for fac in obj["factories"]
+        ]
+
+        board.troops = []
+        for troop_json in obj["troops"]:
+            troop = Troop(
+                troop_json["strength"],
+                board.get_factory(troop_json["source"]),
+                board.get_factory(troop_json["destination"]),
+            )
+            troop.active = troop_json["active"]
+            troop.team = troop_json["team"]
+            troop.distance = troop_json["distance"]
+            troop.travelled = troop_json["travelled"]
+            board.troops.append(troop)
+
+        board.bombs = []
+        for bomb_json in obj["bombs"]:
+            bomb = Bomb(
+                bomb_json["strength"],
+                board.get_factory(bomb_json["source"]),
+                board.get_factory(bomb_json["destination"]),
+            )
+            bomb.active = bomb_json["active"]
+            bomb.team = bomb_json["team"]
+            bomb.distance = bomb_json["distance"]
+            bomb.travelled = bomb_json["travelled"]
+            board.bombs.append(bomb)
+
+        return board

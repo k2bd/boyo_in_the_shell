@@ -3,9 +3,10 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from factory import factory_dist
+from jsonize import Jsonizable
 
 
-class Unit(ABC):
+class Unit(Jsonizable):
     def __init__(self, strength, source, destination):
         self.strength = strength
 
@@ -37,6 +38,25 @@ class Unit(ABC):
         vec *= self.travelled / self.distance
 
         return self.source.position + vec
+
+    def to_json(self):
+        return {
+            "strength": self.strength,
+            "active": self.active,
+            "source": self.source.id,
+            "destination": self.destination.id,
+            "team": self.team,
+            "distance": self.distance,
+            "travelled": self.travelled,
+        }
+
+    @classmethod
+    def from_json(cls, obj):
+        """
+        Units can't be instantiated outside of a Game (because we need Factory
+        objects to initialize), so leave deserializing to the game object!
+        """
+        return obj
 
 
 class Troop(Unit):

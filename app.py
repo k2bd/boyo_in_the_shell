@@ -9,9 +9,6 @@ from game import GameBoard
 from unit import Bomb, Troop
 from order import Move, Inc, SendBomb
 
-PLAYER_ONE_PORT = 23833
-PLAYER_TWO_PORT = 23834
-
 FAC_TEXT_OFFSET = 10
 
 

@@ -1,5 +1,7 @@
 import math
 
+from jsonize import Jsonizable
+
 
 def factory_dist(a, b):
     """
@@ -16,7 +18,7 @@ def factory_dist(a, b):
     return int(float_dist)
 
 
-class Factory:
+class Factory(Jsonizable):
     """
     Game Factory
 
@@ -117,3 +119,24 @@ class Factory:
         if self.stock >= 10 and self.production < 3:
             self.stock -= 10
             self.production += 1
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "team": self.team,
+            "stock": self.stock,
+            "position": list(self.position),
+            "disabled_turns": self.disabled_turns,
+            "production": self.production,
+        }
+
+    @classmethod
+    def from_json(cls, obj):
+        fac = cls(
+            fid=obj["id"],
+            team=obj["team"],
+            production=obj["production"],
+            stock=obj["stock"],
+            position=tuple(obj["position"]),
+        )
+        return fac

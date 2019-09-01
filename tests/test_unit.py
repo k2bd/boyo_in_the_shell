@@ -62,7 +62,7 @@ class TestUnits(unittest.TestCase):
         self.assertEqual(dest_fac.bombs_arriving, 1)
 
     def test_troop_resolve(self):
-        source_fac = Factory(-1, 1, 0, 0, (15, -10))
+        source_fac = Factory(0, -1, 0, 0, (15, -10))
         dest_fac = Factory(1, 1, 0, 0, (-5, 20))
 
         unit = Troop(10, source_fac, dest_fac)
